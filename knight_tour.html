@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>骑士巡游问题 - 动画演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-shadow: 0 0 20px rgba(0, 200, 255, 0.5);
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            min-width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .controls h2 {
+            margin-bottom: 20px;
+            color: #00d4ff;
+            font-size: 1.2em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: #fff;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .speed-control input[type="range"] {
+            flex: 1;
+        }
+
+        .stats {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .stats div {
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .stats span {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .board-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .board {
+            display: inline-grid;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border-radius: 5px;
+        }
+
+        .cell.light {
+            background: #f0d9b5;
+            color: #000;
+        }
+
+        .cell.dark {
+            background: #b58863;
+            color: #fff;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .cell.start {
+            background: #00d4ff !important;
+            color: #000 !important;
+        }
+
+        .cell.visited {
+            background: #4ecdc4 !important;
+            color: #000 !important;
+        }
+
+        .cell.current {
+            background: #ff6b6b !important;
+            color: #fff !important;
+            animation: pulse 0.5s infinite;
+        }
+
+        .cell.path-line {
+            background: #95e1d3 !important;
+            color: #000 !important;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .knight-icon {
+            font-size: 24px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .preset-buttons button {
+            margin-bottom: 0;
+            font-size: 12px;
+            padding: 8px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .status.solving {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+
+        .status.success {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+
+        .status.failed {
+            background: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                flex-direction: column;
+            }
+
+            .cell {
+                width: 35px;
+                height: 35px;
+                font-size: 11px;
+            }
+
+            .knight-icon {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>♞ 骑士巡游问题 (Knight's Tour)</h1>
+
+        <div class="main-layout">
+            <!-- 控制面板 -->
+            <div class="controls">
+                <h2>🎮 控制面板</h2>
+
+                <div class="input-group">
+                    <label>棋盘大小 n (3-20)</label>
+                    <input type="number" id="boardSize" value="8" min="3" max="20">
+                </div>
+
+                <div class="input-group">
+                    <label>起点 (点击棋盘选择)</label>
+                    <div style="display:flex;gap:10px;">
+                        <input type="number" id="startX" value="0" min="0" placeholder="x">
+                        <input type="number" id="startY" value="0" min="0" placeholder="y">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>动画速度</label>
+                    <div class="speed-control">
+                        <span>慢</span>
+                        <input type="range" id="speed" min="1" max="100" value="50">
+                        <span>快</span>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="startTour()">🚀 开始巡游</button>
+                <button class="btn-secondary" onclick="resetBoard()">🔄 重置棋盘</button>
+                <button class="btn-danger" onclick="stopAnimation()">⏹ 停止动画</button>
+
+                <div style="margin-top:15px;">
+                    <label style="color:#aaa;font-size:0.9em;">预设示例</label>
+                    <div class="preset-buttons">
+                        <button class="btn-secondary" onclick="loadPreset(5)">5×5</button>
+                        <button class="btn-secondary" onclick="loadPreset(8)">8×8</button>
+                        <button class="btn-secondary" onclick="loadPreset(10)">10×10</button>
+                        <button class="btn-secondary" onclick="loadPreset(15)">15×15</button>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div>棋盘大小：<span id="statSize">8×8</span></div>
+                    <div>总格数：<span id="statTotal">64</span></div>
+                    <div>已访问：<span id="statVisited">0</span></div>
+                    <div>当前步数：<span id="statStep">0</span></div>
+                    <div>耗时：<span id="statTime">0</span> 秒</div>
+                </div>
+
+                <div id="status" class="status"></div>
+            </div>
+
+            <!-- 棋盘 -->
+            <div class="board-container">
+                <div id="board" class="board"></div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background:#00d4ff;"></div>
+                        <span>起点</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background:#ff6b6b;"></div>
+                        <span>当前位置</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background:#4ecdc4;"></div>
+                        <span>已访问</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background:#95e1d3;"></div>
+                        <span>路径</span>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>算法说明：</strong><br>
+                    采用 <b>Warnsdorff 启发式算法</b>，每次选择可达度最小的下一跳（即从当前位置出发，能到达的未访问格子最少的那个），这样可以大大减少回溯次数，快速找到完整路径。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 马的 8 个移动方向
+        const MOVES = [
+            [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+            [1, -2], [1, 2], [2, -1], [2, 1]
+        ];
+
+        let n = 8;
+        let board = [];
+        let path = [];
+        let startX = 0, startY = 0;
+        let animationTimer = null;
+        let isRunning = false;
+        let startTime = 0;
+
+        // 初始化棋盘
+        function initBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.style.gridTemplateColumns = `repeat(${n}, 50px)`;
+            boardEl.innerHTML = '';
+
+            board = Array.from({length: n}, () => Array(n).fill(-1));
+            path = [];
+
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${(i + j) % 2 === 0 ? 'light' : 'dark'}`;
+                    cell.id = `cell-${i}-${j}`;
+                    cell.onclick = () => selectStart(i, j);
+                    boardEl.appendChild(cell);
+                }
+            }
+
+            updateStats();
+            document.getElementById('status').textContent = '';
+            document.getElementById('status').className = 'status';
+        }
+
+        // 选择起点
+        function selectStart(x, y) {
+            if (isRunning) return;
+
+            // 清除旧起点
+            const oldStart = document.querySelector('.cell.start');
+            if (oldStart) oldStart.classList.remove('start');
+
+            startX = x;
+            startY = y;
+            document.getElementById('startX').value = x;
+            document.getElementById('startY').value = y;
+
+            const cell = document.getElementById(`cell-${x}-${y}`);
+            cell.classList.add('start');
+            cell.innerHTML = '<span class="knight-icon">♞</span>';
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('statSize').textContent = `${n}×${n}`;
+            document.getElementById('statTotal').textContent = n * n;
+            document.getElementById('statVisited').textContent = path.length;
+            document.getElementById('statStep').textContent = path.length;
+        }
+
+        // 检查位置是否合法
+        function isValid(x, y) {
+            return x >= 0 && x < n && y >= 0 && y < n && board[x][y] === -1;
+        }
+
+        // 获取可达度
+        function getDegree(x, y) {
+            let count = 0;
+            for (const [dx, dy] of MOVES) {
+                if (isValid(x + dx, y + dy)) count++;
+            }
+            return count;
+        }
+
+        // Warnsdorff 算法求解
+        function solveKnightTour() {
+            board = Array.from({length: n}, () => Array(n).fill(-1));
+            path = [];
+
+            board[startX][startY] = 0;
+            path.push([startX, startY]);
+
+            const total = n * n;
+
+            function solve(pos, step) {
+                if (step === total) return true;
+
+                const [x, y] = pos;
+                const neighbors = [];
+
+                for (const [dx, dy] of MOVES) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (isValid(nx, ny)) {
+                        neighbors.push([getDegree(nx, ny), nx, ny]);
+                    }
+                }
+
+                // 按可达度排序
+                neighbors.sort((a, b) => a[0] - b[0]);
+
+                for (const [_, nx, ny] of neighbors) {
+                    board[nx][ny] = step;
+                    path.push([nx, ny]);
+
+                    if (solve([nx, ny], step + 1)) return true;
+
+                    board[nx][ny] = -1;
+                    path.pop();
+                }
+
+                return false;
+            }
+
+            return solve([startX, startY], 1);
+        }
+
+        // 开始巡游
+        function startTour() {
+            if (isRunning) return;
+
+            n = parseInt(document.getElementById('boardSize').value);
+            if (n < 3 || n > 20) {
+                alert('棋盘大小必须在 3 到 20 之间！');
+                return;
+            }
+
+            startX = parseInt(document.getElementById('startX').value) || 0;
+            startY = parseInt(document.getElementById('startY').value) || 0;
+
+            if (startX >= n || startY >= n) {
+                alert('起点超出棋盘范围！');
+                return;
+            }
+
+            initBoard();
+            selectStart(startX, startY);
+
+            setStatus('solving', '🔄 正在求解...');
+            startTime = performance.now();
+
+            // 使用 setTimeout 让 UI 更新
+            setTimeout(() => {
+                const success = solveKnightTour();
+                const elapsed = ((performance.now() - startTime) / 1000).toFixed(3);
+                document.getElementById('statTime').textContent = elapsed;
+
+                if (success) {
+                    setStatus('success', '✅ 求解成功！');
+                    startAnimation();
+                } else {
+                    setStatus('failed', '❌ 求解失败，未找到完整路径');
+                }
+            }, 100);
+        }
+
+        // 开始动画
+        function startAnimation() {
+            isRunning = true;
+            let step = 0;
+
+            function animate() {
+                if (step >= path.length || !isRunning) {
+                    isRunning = false;
+                    return;
+                }
+
+                const [x, y] = path[step];
+
+                // 清除上一步的当前标记
+                if (step > 0) {
+                    const [px, py] = path[step - 1];
+                    const prevCell = document.getElementById(`cell-${px}-${py}`);
+                    prevCell.classList.remove('current');
+                    prevCell.classList.add('visited');
+                    prevCell.innerHTML = `<span>${step}</span>`;
+                }
+
+                // 标记当前位置
+                const cell = document.getElementById(`cell-${x}-${y}`);
+                cell.classList.remove('start');
+                cell.classList.add('current');
+                cell.innerHTML = '<span class="knight-icon">♞</span>';
+
+                // 绘制路径线
+                if (step > 0) {
+                    const [px, py] = path[step - 1];
+                    drawPathLine(px, py, x, y);
+                }
+
+                step++;
+                document.getElementById('statVisited').textContent = step;
+                document.getElementById('statStep').textContent = step;
+
+                const speed = parseInt(document.getElementById('speed').value);
+                const delay = Math.max(10, 500 - speed * 5);
+
+                animationTimer = setTimeout(animate, delay);
+            }
+
+            animate();
+        }
+
+        // 绘制路径线（简化版，用背景色表示）
+        function drawPathLine(x1, y1, x2, y2) {
+            // 路径通过 visited 类的颜色变化来表示
+        }
+
+        // 停止动画
+        function stopAnimation() {
+            isRunning = false;
+            if (animationTimer) {
+                clearTimeout(animationTimer);
+                animationTimer = null;
+            }
+        }
+
+        // 重置棋盘
+        function resetBoard() {
+            stopAnimation();
+            initBoard();
+            selectStart(startX, startY);
+        }
+
+        // 设置状态
+        function setStatus(type, text) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = text;
+        }
+
+        // 加载预设
+        function loadPreset(size) {
+            document.getElementById('boardSize').value = size;
+            document.getElementById('startX').value = 0;
+            document.getElementById('startY').value = 0;
+            resetBoard();
+        }
+
+        // 初始化
+        initBoard();
+        selectStart(0, 0);
+    </script>
+</body>
+</html>
